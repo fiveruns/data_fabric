@@ -1,9 +1,6 @@
 require 'active_record'
 
-ActiveRecord::Base.include(Shard::ActiveRecord::Base)
-
 module Shard
-  
   def activate(group, instance)
     Thread[:shards][group.to_s] = instance
   end
@@ -12,3 +9,5 @@ module Shard
     Thread[:shards][group.to_s]
   end
 end
+
+ActiveRecord::Base.include(Shard::ActiveRecord::Base)
