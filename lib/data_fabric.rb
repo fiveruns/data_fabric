@@ -1,5 +1,6 @@
 require 'active_record'
 
+# DataFabric adds a new level of flexibility to ActiveRecord connection handling.
 # You need to describe the topology for your database infrastructure in your model(s).  As with ActiveRecord normally, different models can use different topologies.
 # 
 # class MyHugeVolumeOfDataModel < ActiveRecord::Base
@@ -23,25 +24,40 @@ require 'active_record'
 # 
 # When marked as replicated, all write and transactional operations for the model go to the master, whereas read operations go to the slave.
 # 
-# Since sharding is an application-level concern, your application must set the shard to use based on the current request or environment.  The current shard for a group is set on a thread local variable.  For example, you can set the shard in an ActionController begin_filter based on the user as follows:
+# Since sharding is an application-level concern, your application must set the shard to use based on the current request or environment.  The current shard for a group is set on a thread local variable.  For example, you can set the shard in an ActionController around_filter based on the user as follows:
 # 
 # class ApplicationController < ActionController::Base
-#   begin_filter :select_shard
+#   around_filter :select_shard
 #   
 #   private
-#   def select_shard
-#     DataFabric.activate_shard(:city, @current_user.city)
+#   def select_shard(&action_block)
+#     DataFabric.activate_shard(:city, @current_user.city, &action_block)
 #   end
 # end
 module DataFabric
-
-  def self.activate_shard(group, instance)
-    Thread.current[:shards] = {} unless Thread.current[:shards]
+  
+  def self.activate_shard(group, instance, &block)
+    ensure_setup
     Thread.current[:shards][group.to_s] = instance
+    if block_given?
+      begin
+        yield
+      ensure
+        Thread.current[:shards].delete(group.to_s)
+      end
+    end
+  end
+  
+  # For cases where you can't pass a block to activate_shard, you can
+  # clean up the thread local settings by calling this method at the
+  # end of processing
+  def self.deactivate_shard(group)
+    ensure_setup
+    Thread.current[:shards].delete(group.to_s)
   end
   
   def self.active_shard(group)
-    raise ArgumentException, 'No shard has been activated' unless Thread.current[:shards]
+    raise ArgumentError, 'No shard has been activated' unless Thread.current[:shards]
 
     returning(Thread.current[:shards][group.to_s]) do |shard|
       raise ArgumentError, "No active shard for #{group}" unless shard
@@ -49,76 +65,109 @@ module DataFabric
   end
   
   def self.included(model)
+    # Wire up ActiveRecord::Base
     model.extend ClassMethods
   end
 
-  def self.init
-    ActiveRecord::Base.send(:include, DataFabric)
+  def self.ensure_setup
+    Thread.current[:shards] = {} unless Thread.current[:shards]
   end
 
+
+  # Class methods injected into ActiveRecord::Base
   module ClassMethods
     def connection_topology(options)
       ActiveRecord::Base.active_connections[name] = DataFabric::ConnectionProxy.new(self, options)
     end
   end
   
-  class InstanceProxy
+  class StringProxy
+    def initialize(&block)
+      @proc = block
+    end
     def to_s
-      DataFabric.active_shard(@shard_group)
+      @proc.call
     end
   end
 
   class ConnectionProxy
     def initialize(model_class, options)
-      @replicated = Boolean(options[:replicated])
+      @model_class = model_class
+      @model_class.send :include, ActiveRecordConnectionMethods
+      
+      @replicated = options[:replicated] && true
       @shard_group = options[:shard_by]
-      @prefix = options[:name]
-      model_class.send :include, ActiveRecordConnectionMethods
-      @current = ActiveRecord::Base.configurations[current_connection_name]
+      @prefix = options[:prefix]
+      @current_role = 'slave' if @replicated
+      @current_connection_name_builder = connection_name_builder
+      @cached_connection = nil
+      @last_connection_name = nil
     end
     
-    def current_connection_name
+    def connection_name_builder
       clauses = []
       clauses << @prefix if @prefix
       clauses << @shard_group if @shard_group
-      clauses << instance_proxy if @shard_group
+      clauses << StringProxy.new { DataFabric.active_shard(@shard_group) } if @shard_group
       clauses << RAILS_ENV
-      clauses << role_proxy if @replicated
+      clauses << StringProxy.new { @current_role } if @replicated
+      clauses
     end
     
-    def instance_proxy
-      
+    def connection_name
+      @current_connection_name_builder.join('_')
+    end
+    
+    def raw_connection
+      name = connection_name
+      unless already_connected_to? name 
+        @cached_connection = begin 
+          config = ActiveRecord::Base.configurations[name]
+          raise ArgumentError, "Unknown database config: #{name}" unless config
+          @model_class.establish_connection config
+          conn = @model_class.connection
+          conn.reconnect! unless conn.active?
+          conn
+        end
+      end
+      @cached_connection
+    end
+    
+    def already_connected_to?(name)
+      name == @last_connection_name and @cached_connection
+    end
+    
+    def set_role(role)
+      if @replicated
+        @current_role = role
+        @cached_connection = nil
+      end
     end
     
     def master
-      @current
+      set_role('master')
+      return raw_connection
+    ensure
+      set_role('slave')
     end
   
     def with_master
-      set_to_master!
+      set_role('master')
       yield
     ensure
-      set_to_slave!
+      set_role('slave')
     end
 
-    def set_to_master!
-      @current = @master
-    end
-  
-    def set_to_slave!
-      @current = @slave
-    end
-  
     delegate :insert, :update, :delete, :create_table, :rename_table, :drop_table, :add_column, :remove_column, 
       :change_column, :change_column_default, :rename_column, :add_index, :remove_index, :initialize_schema_information,
       :dump_schema_information, :to => :master
   
     def transaction(start_db_transaction = true, &block)
-      with_master { @current.transaction(start_db_transaction, &block) }
+      with_master { raw_connection.transaction(start_db_transaction, &block) }
     end
 
     def method_missing(method, *args, &block)
-      @current.send(method, *args, &block)
+      raw_connection.send(method, *args, &block)
     end
   end
 

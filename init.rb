@@ -1,3 +1,3 @@
-require 'shard'
+require 'data_fabric'
 
-Shard.init
+ActiveRecord::Base.send(:include, DataFabric)
