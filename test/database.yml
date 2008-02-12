@@ -1,0 +1,27 @@
+fiveruns_city_austin_test_master:
+  adapter: mysql
+  host: localhost
+  database: vr_austin_master
+  username: root
+  password:
+
+fiveruns_city_austin_test_slave:
+  adapter: mysql
+  host: localhost
+  database: vr_austin_slave
+  username: root
+  password:
+
+fiveruns_city_dallas_test_master:
+  adapter: mysql
+  host: localhost
+  database: vr_dallas_master
+  username: root
+  password:
+
+fiveruns_city_dallas_test_slave:
+  adapter: mysql
+  host: localhost
+  database: vr_dallas_slave
+  username: root
+  password:

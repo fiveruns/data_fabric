@@ -77,7 +77,8 @@ module DataFabric
   # Class methods injected into ActiveRecord::Base
   module ClassMethods
     def connection_topology(options)
-      ActiveRecord::Base.active_connections[name] = DataFabric::ConnectionProxy.new(self, options)
+      proxy = DataFabric::ConnectionProxy.new(self, options)
+      ActiveRecord::Base.active_connections[name] = proxy
     end
   end
   
@@ -92,17 +93,54 @@ module DataFabric
 
   class ConnectionProxy
     def initialize(model_class, options)
-      @model_class = model_class
-      @model_class.send :include, ActiveRecordConnectionMethods
-      
+      @model_class = model_class      
       @replicated = options[:replicated]
       @shard_group = options[:shard_by]
       @prefix = options[:prefix]
       @current_role = 'slave' if @replicated
       @current_connection_name_builder = connection_name_builder
       @cached_connection = nil
-      @last_connection_name = nil
+      @current_connection_name = nil
+
+      @model_class.send :include, ActiveRecordConnectionMethods if @replicated
     end
+
+    delegate :insert, :update, :delete, :create_table, :rename_table, :drop_table, :add_column, :remove_column, 
+      :change_column, :change_column_default, :rename_column, :add_index, :remove_index, :initialize_schema_information,
+      :dump_schema_information, :to => :master
+    
+    def transaction(start_db_transaction = true, &block)
+      with_master { raw_connection.transaction(start_db_transaction, &block) }
+    end
+
+    def method_missing(method, *args, &block)
+      unless @cached_connection
+        raw_connection
+      end
+      @cached_connection.send(method, *args, &block) 
+    end
+    
+    def connection_name
+      @current_connection_name_builder.join('_')
+    end
+    
+    def disconnect!
+      @cached_connection.disconnect! if @cached_connection
+      @cached_connection = nil
+    end
+    
+    def verify!(arg)
+      @cached_connection.verify!(0) if @cached_connection
+    end
+    
+    def with_master
+      set_role('master')
+      yield
+    ensure
+      set_role('slave')
+    end
+
+    private
     
     def connection_name_builder
       clauses = []
@@ -114,10 +152,6 @@ module DataFabric
       clauses
     end
     
-    def connection_name
-      @current_connection_name_builder.join('_')
-    end
-    
     def raw_connection
       conn_name = connection_name
       unless already_connected_to? conn_name 
@@ -126,19 +160,21 @@ module DataFabric
           raise ArgumentError, "Unknown database config: #{conn_name}" unless config
           @model_class.establish_connection config
           conn = @model_class.connection
-          conn.reconnect! unless conn.active?
+#          conn.verify! 0
           conn
         end
+        @model_class.active_connections[@model_class.name] = self
       end
       @cached_connection
     end
     
     def already_connected_to?(conn_name)
-      conn_name == @last_connection_name and @cached_connection
+      conn_name == @current_connection_name and @cached_connection
     end
     
     def set_role(role)
-      if @replicated
+      if @replicated and @current_role != role
+#        puts "Role: #{role}"
         @current_role = role
         @cached_connection = nil
       end
@@ -149,25 +185,6 @@ module DataFabric
       return raw_connection
     ensure
       set_role('slave')
-    end
-  
-    def with_master
-      set_role('master')
-      yield
-    ensure
-      set_role('slave')
-    end
-
-    delegate :insert, :update, :delete, :create_table, :rename_table, :drop_table, :add_column, :remove_column, 
-      :change_column, :change_column_default, :rename_column, :add_index, :remove_index, :initialize_schema_information,
-      :dump_schema_information, :to => :master
-  
-    def transaction(start_db_transaction = true, &block)
-      with_master { raw_connection.transaction(start_db_transaction, &block) }
-    end
-
-    def method_missing(method, *args, &block)
-      raw_connection.send(method, *args, &block)
     end
   end
 

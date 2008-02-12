@@ -15,11 +15,28 @@ end
 
 class AdapterMock < ActiveRecord::ConnectionAdapters::AbstractAdapter
   # Minimum required to perform a find with no results
-  def columns(table_name, name=nil)
-    []
-  end
-  def select(sql, name = nil)
-    []
+   def columns(table_name, name=nil)
+     []
+   end
+   def select(sql, name=nil)
+     []
+   end
+   def execute(sql, name=nil)
+     0
+   end
+   
+   def name
+     'fake-db'
+   end
+  
+   def method_missing(name, *args)
+     raise ArgumentError, "#{self.class.name} missing '#{name}': #{args.inspect}"
+   end
+end
+
+class RawConnection
+  def method_missing(name, *args)
+      puts "#{self.class.name} missing '#{name}': #{args.inspect}"
   end
 end
 
@@ -51,10 +68,27 @@ class ConnectionTest < Test::Unit::TestCase
   
   def test_enchilada
     setup_configuration_for TheWholeEnchilada, 'fiveruns_city_dallas_test_slave'
+    setup_configuration_for TheWholeEnchilada, 'fiveruns_city_dallas_test_master'
     DataFabric.activate_shard :city, :dallas do
       assert_equal 'fiveruns_city_dallas_test_slave', TheWholeEnchilada.connection.connection_name
+
+      # Should use the slave
       assert_raises ActiveRecord::RecordNotFound do
         TheWholeEnchilada.find(1)
+      end
+      
+      # Should use the master
+      mmmm = TheWholeEnchilada.new
+      mmmm.instance_variable_set(:@attributes, { 'id' => 1 })
+      assert_raises ActiveRecord::RecordNotFound do
+        mmmm.reload
+      end
+      # ...but immediately set it back to default to the slave
+      assert_equal 'fiveruns_city_dallas_test_slave', TheWholeEnchilada.connection.connection_name
+      
+      # Should use the master
+      TheWholeEnchilada.transaction do
+        mmmm.save!
       end
     end
   end
@@ -62,7 +96,8 @@ class ConnectionTest < Test::Unit::TestCase
   private
   
   def setup_configuration_for(clazz, name)
-    flexmock(clazz).should_receive(:mysql_connection).and_return(AdapterMock.new(nil))
-    ActiveRecord::Base.configurations = { name => { :adapter => 'mysql', :database => name, :host => 'localhost'} }
+    flexmock(clazz).should_receive(:mysql_connection).and_return(AdapterMock.new(RawConnection.new))
+    ActiveRecord::Base.configurations ||= HashWithIndifferentAccess.new
+    ActiveRecord::Base.configurations[name] = HashWithIndifferentAccess.new({ :adapter => 'mysql', :database => name, :host => 'localhost'})
   end
 end
