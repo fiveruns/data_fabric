@@ -38,7 +38,7 @@ module DataFabric
   
   def self.activate_shard(group, instance, &block)
     ensure_setup
-    Thread.current[:shards][group.to_s] = instance
+    Thread.current[:shards][group.to_s] = instance.to_s
     if block_given?
       begin
         yield
@@ -95,7 +95,7 @@ module DataFabric
       @model_class = model_class
       @model_class.send :include, ActiveRecordConnectionMethods
       
-      @replicated = options[:replicated] && true
+      @replicated = options[:replicated]
       @shard_group = options[:shard_by]
       @prefix = options[:prefix]
       @current_role = 'slave' if @replicated
@@ -119,11 +119,11 @@ module DataFabric
     end
     
     def raw_connection
-      name = connection_name
-      unless already_connected_to? name 
+      conn_name = connection_name
+      unless already_connected_to? conn_name 
         @cached_connection = begin 
-          config = ActiveRecord::Base.configurations[name]
-          raise ArgumentError, "Unknown database config: #{name}" unless config
+          config = ActiveRecord::Base.configurations[conn_name]
+          raise ArgumentError, "Unknown database config: #{conn_name}" unless config
           @model_class.establish_connection config
           conn = @model_class.connection
           conn.reconnect! unless conn.active?
@@ -133,8 +133,8 @@ module DataFabric
       @cached_connection
     end
     
-    def already_connected_to?(name)
-      name == @last_connection_name and @cached_connection
+    def already_connected_to?(conn_name)
+      conn_name == @last_connection_name and @cached_connection
     end
     
     def set_role(role)
