@@ -163,6 +163,7 @@ module DataFabric
           config = ActiveRecord::Base.configurations[conn_name]
           raise ArgumentError, "Unknown database config: #{conn_name}, have #{ActiveRecord::Base.configurations.inspect}" unless config
           @model_class.establish_connection config
+          @current_connection_name = conn_name
           conn = @model_class.connection
 #          conn.verify! 0
           conn
