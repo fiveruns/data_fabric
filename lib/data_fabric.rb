@@ -36,6 +36,10 @@ require 'active_record'
 # end
 module DataFabric
   
+  def self.init
+    ActiveRecord::Base.send(:include, self)
+  end
+  
   def self.activate_shard(group, instance, &block)
     ensure_setup
     Thread.current[:shards][group.to_s] = instance.to_s
@@ -157,7 +161,7 @@ module DataFabric
       unless already_connected_to? conn_name 
         @cached_connection = begin 
           config = ActiveRecord::Base.configurations[conn_name]
-          raise ArgumentError, "Unknown database config: #{conn_name}" unless config
+          raise ArgumentError, "Unknown database config: #{conn_name}, have #{ActiveRecord::Base.configurations.inspect}" unless config
           @model_class.establish_connection config
           conn = @model_class.connection
 #          conn.verify! 0
