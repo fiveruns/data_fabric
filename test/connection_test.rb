@@ -57,7 +57,7 @@ class ConnectionTest < Test::Unit::TestCase
     assert_raises ArgumentError do
       ShardModel.connection.connection_name
     end
-    DataFabric.activate_shard(:city, 'austin') do
+    DataFabric.activate_shard(:city => 'austin', :category => 'art') do
       assert_equal 'city_austin_test', ShardModel.connection.connection_name
     end
     # ensure it got unset
@@ -69,7 +69,7 @@ class ConnectionTest < Test::Unit::TestCase
   def test_enchilada
     setup_configuration_for TheWholeEnchilada, 'fiveruns_city_dallas_test_slave'
     setup_configuration_for TheWholeEnchilada, 'fiveruns_city_dallas_test_master'
-    DataFabric.activate_shard :city, :dallas do
+    DataFabric.activate_shard :city => :dallas do
       assert_equal 'fiveruns_city_dallas_test_slave', TheWholeEnchilada.connection.connection_name
 
       # Should use the slave

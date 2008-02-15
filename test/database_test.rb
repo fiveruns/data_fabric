@@ -14,7 +14,7 @@ class DatabaseTest < Test::Unit::TestCase
   end
 
   def test_live_burrito
-    DataFabric.activate_shard :city, :dallas do
+    DataFabric.activate_shard :city => :dallas do
       assert_equal 'fiveruns_city_dallas_test_slave', TheWholeBurrito.connection.connection_name
 
       # Should use the slave

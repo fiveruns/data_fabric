@@ -31,7 +31,7 @@ require 'active_record'
 #   
 #   private
 #   def select_shard(&action_block)
-#     DataFabric.activate_shard(:city, @current_user.city, &action_block)
+#     DataFabric.activate_shard(:city => @current_user.city, &action_block)
 #   end
 # end
 module DataFabric
@@ -40,19 +40,23 @@ module DataFabric
     ActiveRecord::Base.send(:include, self)
   end
   
-  def self.activate_shard(group, instance, &block)
+  def self.activate_shard(shards, &block)
     ensure_setup
-    Thread.current[:shards][group.to_s] = instance.to_s
+    shards.each do |key, value|
+      Thread.current[:shards][key.to_s] = value.to_s
+    end
     if block_given?
       begin
         yield
       ensure
-        Thread.current[:shards].delete(group.to_s)
+        shards.each do |key, value|
+          Thread.current[:shards].delete(key.to_s)
+        end
       end
     end
   end
   
-  # For cases where you can't pass a block to activate_shard, you can
+  # For cases where you can't pass a block to activate_shards, you can
   # clean up the thread local settings by calling this method at the
   # end of processing
   def self.deactivate_shard(group)
