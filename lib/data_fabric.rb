@@ -109,6 +109,7 @@ module DataFabric
       @current_connection_name_builder = connection_name_builder
       @cached_connection = nil
       @current_connection_name = nil
+      @role_changed = false
 
       @model_class.send :include, ActiveRecordConnectionMethods if @replicated
     end
@@ -122,8 +123,9 @@ module DataFabric
     end
 
     def method_missing(method, *args, &block)
-      unless @cached_connection
+      unless @cached_connection and !@role_changed
         raw_connection
+        @role_changed = false
       end
       @cached_connection.send(method, *args, &block) 
     end
@@ -167,9 +169,10 @@ module DataFabric
           config = ActiveRecord::Base.configurations[conn_name]
           raise ArgumentError, "Unknown database config: #{conn_name}, have #{ActiveRecord::Base.configurations.inspect}" unless config
           @model_class.establish_connection config
+#          puts "Switching from #{@current_connection_name} to #{conn_name}"
           @current_connection_name = conn_name
           conn = @model_class.connection
-#          conn.verify! 0
+          conn.verify! 0
           conn
         end
         @model_class.active_connections[@model_class.name] = self
@@ -183,9 +186,8 @@ module DataFabric
     
     def set_role(role)
       if @replicated and @current_role != role
-#        puts "Role: #{role}"
         @current_role = role
-        @cached_connection = nil
+        @role_changed = true
       end
     end
     
