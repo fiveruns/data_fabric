@@ -119,7 +119,22 @@ module DataFabric
       :dump_schema_information, :to => :master
     
     def transaction(start_db_transaction = true, &block)
-      with_master { raw_connection.transaction(start_db_transaction, &block) }
+      with_master do
+        retrying = false
+        begin
+          raw_connection.transaction(start_db_transaction, &block)
+        rescue => e
+          if not retrying and e.message.include? 'gone away'
+            retrying = true
+            puts "Restarting transaction due to dropped database connection"
+            raw_connection.rollback_db_transaction
+            raw_connection.reconnect!
+            retry
+          else
+            raise e
+          end
+        end
+      end
     end
 
     def method_missing(method, *args, &block)
