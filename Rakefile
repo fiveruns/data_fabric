@@ -14,7 +14,7 @@ task :create_db do
   require 'active_record'
   ENV['RAILS_ENV'] = 'test'
 
-  ActiveRecord::Base.configurations = { 'test' => { :adapter => 'mysql', :host => 'localhost', :database => 'manage_test' } }
+  ActiveRecord::Base.configurations = { 'test' => { :adapter => 'mysql', :host => 'localhost', :database => 'mysql' } }
   ActiveRecord::Base.establish_connection 'test'
 
   def using_connection(&block)

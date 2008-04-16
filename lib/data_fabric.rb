@@ -59,9 +59,11 @@ module DataFabric
   # For cases where you can't pass a block to activate_shards, you can
   # clean up the thread local settings by calling this method at the
   # end of processing
-  def self.deactivate_shard(group)
+  def self.deactivate_shard(shards)
     ensure_setup
-    Thread.current[:shards].delete(group.to_s)
+		shards.each do |key, value|
+			Thread.current[:shards].delete(key.to_s)
+		end
   end
   
   def self.active_shard(group)
