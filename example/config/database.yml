@@ -1,39 +1,21 @@
 # SQLite version 3.x
 #   gem install sqlite3-ruby (not necessary on OS X Leopard)
-development:
+
+<% %w(development test production).each do |env| %>
+
+<%= env %>:
   adapter: sqlite3
-  database: db/development.sqlite3
+  database: <%= "db/#{env}.sqlite3" %>
   timeout: 5000
 
-# Warning: The database defined as "test" will be erased and
-# re-generated from your development database when you run "rake".
-# Do not set this db to the same as development or production.
-test:
+<%= "shard_0_#{env}" %>:
   adapter: sqlite3
-  database: db/test.sqlite3
+  database: <%= "db/s0_#{env}.sqlite3" %>
   timeout: 5000
 
-production:
+<%= "shard_1_#{env}" %>:
   adapter: sqlite3
-  database: db/production.sqlite3
+  database: <%= "db/s1_#{env}.sqlite3" %>
   timeout: 5000
 
-shard_0_production_master:
-  adapter: sqlite3
-  database: db/s0_prod_master.sqlite3
-  timeout: 5000
-
-shard_0_production_slave:
-  adapter: sqlite3
-  database: db/s0_prod_slave.sqlite3
-  timeout: 5000
-
-shard_1_production_master:
-  adapter: sqlite3
-  database: db/s1_prod_master.sqlite3
-  timeout: 5000
-
-shard_1_production_slave:
-  adapter: sqlite3
-  database: db/s1_prod_slave.sqlite3
-  timeout: 5000
+<% end %>

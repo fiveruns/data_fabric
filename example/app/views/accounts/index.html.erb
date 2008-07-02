@@ -1,0 +1,47 @@
+<hr/>
+<h2>Accounts</h2>
+<table>
+	<thead>
+		<tr><th>ID</th><th>Name</th><th>Shard</th><th>&nbsp;</th></tr>
+	</thead>
+	<tbody>
+<% @accounts.each do |account| %>
+	<tr>
+		<td><%= account.id %></td>
+		<td><%= account.name %></td>
+		<td><%= account.shard %></td>
+		<td><%= link_to 'Choose', choose_account_path(account) %></td>
+	</tr>
+<% end %>
+	</tbody>
+</table>
+<hr/>
+<h2>New Account</h2>
+<p>
+<% form_for :acct, :url => accounts_path do |f| %>
+	Name : <%= f.text_field :name %><br/>
+	Shard: <%= select 'acct', 'shard', [[0,0],[1,1]] %><br/>
+	<%= submit_tag 'Save' %>
+<% end %>
+</p>
+<hr/>
+<% if @account %>
+<h2>Current Account: <%= @account.name %></h2>
+	<table>
+		<thead>
+			<tr><th>ID</th><th>Account</th><th>Value</th></tr>
+		</thead>
+		<tbody>
+		<% @account.figments.each do |fig| %>
+		<tr>
+			<td><%= fig.id %></td>
+			<td><%= fig.account.name %></td>
+			<td><%= fig.value %></td>
+		</tr>
+		<% end %>
+		</tbody>
+	</table>
+	Add Fig: <% form_for :figment, :url => figments_path do |f| %><%= f.text_field :value %><%= submit_tag 'Save' %><% end %>
+<% else %>
+	<em>No account selected.</em>
+<% end %>

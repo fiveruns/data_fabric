@@ -1,7 +1,7 @@
 ActionController::Routing::Routes.draw do |map|
   map.resources :figments
-
-  map.resources :accounts
+  map.resources :accounts, :member => {:choose => :get}
+  map.root :controller => 'accounts'
 
   # The priority is based upon order of creation: first created -> highest priority.
 
