@@ -1,4 +1,5 @@
 require 'active_record'
+require 'active_record/version'
 
 # DataFabric adds a new level of flexibility to ActiveRecord connection handling.
 # You need to describe the topology for your database infrastructure in your model(s).  As with ActiveRecord normally, different models can use different topologies.
@@ -35,8 +36,14 @@ require 'active_record'
 #   end
 # end
 module DataFabric
+  VERSION = "1.0.0"
   
+  def self.logger
+    ActiveRecord::Base.logger
+  end
+
   def self.init
+    logger.info "Loading data_fabric #{VERSION} with ActiveRecord #{ActiveRecord::VERSION::STRING}"
     ActiveRecord::Base.send(:include, self)
   end
   
@@ -61,9 +68,9 @@ module DataFabric
   # end of processing
   def self.deactivate_shard(shards)
     ensure_setup
-		shards.each do |key, value|
-			Thread.current[:shards].delete(key.to_s)
-		end
+    shards.each do |key, value|
+      Thread.current[:shards].delete(key.to_s)
+    end
   end
   
   def self.active_shard(group)
@@ -82,13 +89,15 @@ module DataFabric
   def self.ensure_setup
     Thread.current[:shards] = {} unless Thread.current[:shards]
   end
-
-
+  
   # Class methods injected into ActiveRecord::Base
   module ClassMethods
     def connection_topology(options)
       proxy = DataFabric::ConnectionProxy.new(self, options)
       ActiveRecord::Base.active_connections[name] = proxy
+      
+      raise ArgumentError, "data_fabric does not support ActiveRecord's allow_concurrency = true" if allow_concurrency
+      DataFabric.logger.info "Creating data_fabric proxy for class #{name}"
     end
   end
   
@@ -121,27 +130,16 @@ module DataFabric
       :dump_schema_information, :to => :master
     
     def transaction(start_db_transaction = true, &block)
-      with_master do
-        retrying = false
-        begin
-          raw_connection.transaction(start_db_transaction, &block)
-        rescue => e
-          if not retrying and e.message.include? 'gone away'
-            retrying = true
-            puts "Restarting transaction due to dropped database connection"
-            raw_connection.reconnect!
-            retry
-          else
-            raise e
-          end
-        end
-      end
+      with_master { raw_connection.transaction(start_db_transaction, &block) }
     end
 
     def method_missing(method, *args, &block)
       unless @cached_connection and !@role_changed
         raw_connection
         @role_changed = false
+      end
+      if logger.debug?
+        logger.debug("Calling #{method} on #{@cached_connection}")
       end
       @cached_connection.send(method, *args, &block) 
     end
@@ -185,7 +183,9 @@ module DataFabric
           config = ActiveRecord::Base.configurations[conn_name]
           raise ArgumentError, "Unknown database config: #{conn_name}, have #{ActiveRecord::Base.configurations.inspect}" unless config
           @model_class.establish_connection config
-#          puts "Switching from #{@current_connection_name} to #{conn_name}"
+          if logger.debug?
+            logger.debug "Switching from #{@current_connection_name} to #{conn_name}"
+          end
           @current_connection_name = conn_name
           conn = @model_class.connection
           conn.verify! 0
@@ -212,6 +212,10 @@ module DataFabric
       return raw_connection
     ensure
       set_role('slave')
+    end
+    
+    def logger
+      DataFabric.logger
     end
   end
 

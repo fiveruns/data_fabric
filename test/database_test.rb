@@ -36,12 +36,4 @@ class DatabaseTest < Test::Unit::TestCase
       end
     end
   end
-
-  private
-  
-  def setup_configuration_for(clazz, name)
-    flexmock(clazz).should_receive(:mysql_connection).and_return(AdapterMock.new(RawConnection.new))
-    ActiveRecord::Base.configurations ||= HashWithIndifferentAccess.new
-    ActiveRecord::Base.configurations[name] = HashWithIndifferentAccess.new({ :adapter => 'mysql', :database => name, :host => 'localhost'})
-  end
 end

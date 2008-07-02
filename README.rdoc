@@ -58,8 +58,11 @@ ActionController begin_filter based on the user as follows:
     end
   end
 
-Please note that sharded models should never be placed in the session store or you
-will get "Shard not set" errors when the session is persisted.
+
+== Warnings
+
+* Sharded models should never be placed in the session store or you will get "Shard not set" errors when the session is persisted.
+* ActiveRecord's allow_concurrency = true is NOT supported in this version of data_fabric.
 
 
 == Thanks to...
