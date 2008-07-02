@@ -1,0 +1,2 @@
+module FigmentsHelper
+end

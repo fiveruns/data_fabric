@@ -1,0 +1,7 @@
+# Read about fixtures at http://ar.rubyonrails.org/classes/Fixtures.html
+
+<% %w(fiveruns google yahoo microsoft).each_with_index do |name, idx| %>
+<%= name %>:
+  name: <%= name %> 
+  shard: <%= idx % 2 %>
+<% end %>

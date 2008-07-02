@@ -1,4 +1,6 @@
 require 'rake/testtask'
+require 'fileutils'
+include FileUtils
 
 RAILS_ROOT=File.dirname(__FILE__)
 
@@ -8,6 +10,21 @@ Rake::TestTask.new do |t|
 end
 
 task :default => [:pretest, :test]
+
+namespace :app do
+	task :prepare do
+		mkdir_p 'example/vendor/plugins/data_fabric'
+		cp_r 'lib', 'example/vendor/plugins/data_fabric'
+		cp 'init.rb', 'example/vendor/plugins/data_fabric'
+	end
+
+	task :clean do
+		rm_rf 'example/vendor/plugins/data_fabric'
+	end
+
+	task :test => [:clean, :prepare] do
+	end
+end
 
 task :pretest do
 	setup_connection
