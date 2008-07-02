@@ -13,7 +13,7 @@ basket.  :-)
 
 == Installation
 
-  gem install data_fabric
+  gem install fiveruns-data_fabric --source http://gems.github.com
 
 == How does it work?
 
@@ -47,14 +47,14 @@ go to the master, whereas read operations go to the slave.
 Since sharding is an application-level concern, your application must set the shard
 to use based on the current request or environment.  The current shard for a group
 is set on a thread local variable.  For example, you can set the shard in an 
-ActionController begin_filter based on the user as follows:
+ActionController around_filter based on the user as follows:
 
   class ApplicationController < ActionController::Base
     around_filter :select_shard
 
     private
     def select_shard(&block)
-      DataFabric.activate_shard(:city, @current_user.city, &block)
+      DataFabric.activate_shard(:city => @current_user.city, &block)
     end
   end
 
@@ -63,6 +63,10 @@ ActionController begin_filter based on the user as follows:
 
 * Sharded models should never be placed in the session store or you will get "Shard not set" errors when the session is persisted.
 * ActiveRecord's allow_concurrency = true is NOT supported in this version of data_fabric.
+
+== Testing and Bug Reports
+
+If you think you've found a problem with data_fabric, please use the example application to reproduce the bug and send me the diff.  The example application is a stock Rails 2.1 application which uses data_fabric in the expected fashion.
 
 
 == Thanks to...
@@ -75,6 +79,7 @@ FiveRuns:: for paying me to develop this code and allowing its release
 == Author
 
 Mike Perham <mperham@gmail.com>
+http://mikeperham.com
 
 
 == LICENSE:
