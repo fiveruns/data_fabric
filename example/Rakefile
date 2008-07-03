@@ -13,6 +13,7 @@ namespace :db do
 		task :migrate do
 			require 'erb'
 			require 'logger'
+			require 'active_record'
 			reference = YAML::load(ERB.new(IO.read("config/database.yml")).result)
 			env = RAILS_ENV = ENV['RAILS_ENV'] || 'development'
 			ActiveRecord::Base.logger = Logger.new(STDOUT)

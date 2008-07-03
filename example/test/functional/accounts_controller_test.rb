@@ -3,10 +3,10 @@ require 'test_helper'
 class AccountsControllerTest < ActionController::TestCase
   fixtures :accounts
   
-  # Replace this with your real tests.
   def test_index
     get :index
-    assert_response 200
+    assert_response :success
     assert assigns(:accounts)
+    assert_equal 4, assigns(:accounts).size
   end
 end
