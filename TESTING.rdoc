@@ -1,0 +1,34 @@
+Because of what it does, data_fabric is difficult to test easily.
+
+There are two layers of tests: unit tests and integration tests.
+
+
+== Running the Unit Tests
+
+The unit tests test both with and without an actual database.  test/database_test.rb
+tests against a MySQL database.  The other unit tests mock AR so no actual database is 
+required.  You must customize test/database.yml to point to your MySQL database.  
+"rake pretest" will set up MySQL to run the tests but you will need to customize
+the connection settings in the Rakefile pretest task.
+
+
+== Running the Integration Tests
+
+data_fabric ships with an example application which shows an actual Rails application
+using data_fabric.  You can customize config/database.yml but by default it uses a local
+Sqlite3 database so there should be no customization necessary.
+
+Run the Rake task to prepare the application for testing.  This will copy the latest data_fabric code
+to vendor/plugins, delete existing databases and migrate all the databases from scratch.  You should
+then be able to run the example application's tests.
+
+cd example
+rake app:prepare
+rake test
+
+
+== Submitting Bugs
+
+If you think you've found a problem with data_fabric, please write a unit or integration test
+which reproduces the problem.  This should make tracking down and fixing the bug relatively
+easy and provides a regression test for future releases.
