@@ -3,7 +3,7 @@ require 'echoe'
 
 require File.dirname(__FILE__) << "/lib/data_fabric/version"
 
-Echoe.new 'fiveruns_manage' do |p|
+Echoe.new 'data_fabric' do |p|
 	p.version = DataFabric::Version::STRING
 	p.author = "Mike Perham"
 	p.email  = 'mperham@gmail.com'
