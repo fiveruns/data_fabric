@@ -1,6 +1,4 @@
-Because of what it does, data_fabric is difficult to test easily.
-
-There are two layers of tests: unit tests and integration tests.
+data_fabric has two layers of tests: unit tests and integration tests.
 
 
 == Running the Unit Tests
@@ -22,9 +20,9 @@ Run the Rake task to prepare the application for testing.  This will copy the la
 to vendor/plugins, delete existing databases and migrate all the databases from scratch.  You should
 then be able to run the example application's tests.
 
-cd example
-rake app:prepare
-rake test
+ cd example
+ rake app:prepare
+ rake test
 
 
 == Submitting Bugs
