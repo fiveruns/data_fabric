@@ -13,7 +13,7 @@ basket.  :-)
 
 == Installation
 
-  gem install fiveruns-data_fabric --source http://gems.github.com
+  gem install data_fabric
 
 == How does it work?
 
@@ -45,7 +45,7 @@ When marked as replicated, all write and transactional operations for the model
 go to the master, whereas read operations go to the slave.
 
 Since sharding is an application-level concern, your application must set the shard
-to use based on the current request or environment.  The current shard for a group
+to use based on the current request or environment.  The current shard
 is set on a thread local variable.  For example, you can set the shard in an 
 ActionController around_filter based on the user as follows:
 
