@@ -21,23 +21,23 @@ You describe the topology for your database infrastructure in your model(s).
 Different models can use different topologies.
 
   class MyHugeVolumeOfDataModel < ActiveRecord::Base
-    connection_topology :replicated => true, :shard_by => :city
+    data_fabric :replicated => true, :shard_by => :city
   end
 
 There are four supported modes of operation, depending on the options given to the 
-connection_topology method.  The plugin will look for connections in your 
+data_fabric method.  The plugin will look for connections in your 
 config/database.yml with the following convention:
 
 No connection topology:
 #{environment} - this is the default, as with ActiveRecord, e.g. "production"
 
-  connection_topology :replicated => true
+  data_fabric :replicated => true
 #{environment}_#{role} - no sharding, just replication, where role is "master" or "slave", e.g. "production_master"
 
-  connection_topology :shard_by => :city
+  data_fabric :shard_by => :city
 #{group}_#{shard}_#{environment} - sharding, no replication, e.g. "city_austin_production"
 
-  connection_topology :replicated => true, :shard_by => :city
+  data_fabric :replicated => true, :shard_by => :city
 #{group}_#{shard}_#{environment}_#{role} - sharding with replication, e.g. "city_austin_production_master"
 
 

@@ -5,21 +5,21 @@ require 'active_record/version'
 # You need to describe the topology for your database infrastructure in your model(s).  As with ActiveRecord normally, different models can use different topologies.
 # 
 # class MyHugeVolumeOfDataModel < ActiveRecord::Base
-#   connection_topology :replicated => true, :shard_by => :city
+#   data_fabric :replicated => true, :shard_by => :city
 # end
 # 
-# There are four supported modes of operation, depending on the options given to the connection_topology method.  The plugin will look for connections in your config/database.yml with the following convention:
+# There are four supported modes of operation, depending on the options given to the data_fabric method.  The plugin will look for connections in your config/database.yml with the following convention:
 # 
 # No connection topology:
 # #{environment} - this is the default, as with ActiveRecord, e.g. "production"
 # 
-# connection_topology :replicated => true
+# data_fabric :replicated => true
 # #{environment}_#{role} - no sharding, just replication, where role is "master" or "slave", e.g. "production_master"
 # 
-# connection_topology :shard_by => :city
+# data_fabric :shard_by => :city
 # #{group}_#{shard}_#{environment} - sharding, no replication, e.g. "city_austin_production"
 # 
-# connection_topology :replicated => true, :shard_by => :city
+# data_fabric :replicated => true, :shard_by => :city
 # #{group}_#{shard}_#{environment}_#{role} - sharding with replication, e.g. "city_austin_production_master"
 # 
 # 
@@ -92,13 +92,14 @@ module DataFabric
   
   # Class methods injected into ActiveRecord::Base
   module ClassMethods
-    def connection_topology(options)
+    def data_fabric(options)
       proxy = DataFabric::ConnectionProxy.new(self, options)
       ActiveRecord::Base.active_connections[name] = proxy
       
       raise ArgumentError, "data_fabric does not support ActiveRecord's allow_concurrency = true" if allow_concurrency
       DataFabric.logger.info "Creating data_fabric proxy for class #{name}"
     end
+    alias :connection_topology :data_fabric # legacy
   end
   
   class StringProxy
