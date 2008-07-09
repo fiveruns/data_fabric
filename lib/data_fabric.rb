@@ -36,14 +36,13 @@ require 'active_record/version'
 #   end
 # end
 module DataFabric
-  VERSION = "1.0.0"
   
   def self.logger
     ActiveRecord::Base.logger
   end
 
   def self.init
-    logger.info "Loading data_fabric #{VERSION} with ActiveRecord #{ActiveRecord::VERSION::STRING}"
+    logger.info "Loading data_fabric #{DataFabric::Version::STRING} with ActiveRecord #{ActiveRecord::VERSION::STRING}"
     ActiveRecord::Base.send(:include, self)
   end
   
@@ -128,7 +127,7 @@ module DataFabric
 
     delegate :insert, :update, :delete, :create_table, :rename_table, :drop_table, :add_column, :remove_column, 
       :change_column, :change_column_default, :rename_column, :add_index, :remove_index, :initialize_schema_information,
-      :dump_schema_information, :to => :master
+      :dump_schema_information, :execute, :to => :master
     
     def transaction(start_db_transaction = true, &block)
       with_master { raw_connection.transaction(start_db_transaction, &block) }
