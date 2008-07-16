@@ -21,4 +21,31 @@ class ShardTest < Test::Unit::TestCase
       assert_equal 'dallas', DataFabric.active_shard(:city)
     end.join
   end
+  
+  def test_activations_can_be_nested
+    DataFabric.activate_shard(:name => 'Belldandy') do
+      DataFabric.activate_shard(:technique => 'Thousand Years of Pain') do
+        DataFabric.activate_shard(:name => 'Lelouche') do
+          DataFabric.activate_shard(:technique => 'Shadow Replication') do
+            assert_equal 'Shadow Replication', DataFabric.active_shard(:technique)
+            assert_equal 'Lelouche', DataFabric.active_shard(:name)
+          end
+          assert_equal 'Thousand Years of Pain', DataFabric.active_shard(:technique)
+          assert_equal 'Lelouche', DataFabric.active_shard(:name)
+        end
+        assert_equal 'Thousand Years of Pain', DataFabric.active_shard(:technique)
+        assert_equal 'Belldandy', DataFabric.active_shard(:name)
+      end
+      assert_raises ArgumentError do
+        DataFabric.active_shard(:technique)
+      end
+      assert_equal 'Belldandy', DataFabric.active_shard(:name)
+    end
+    assert_raises ArgumentError do
+      DataFabric.active_shard(:technique)
+    end
+    assert_raises ArgumentError do
+      DataFabric.active_shard(:name)
+    end
+  end
 end
