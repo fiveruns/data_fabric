@@ -48,27 +48,18 @@ module DataFabric
   
   def self.activate_shard(shards, &block)
     ensure_setup
-    old_shard_values = {}
-    newly_added_shard_keys = []
+
+    # Save the old shard settings to handle nested activation
+    old = Thread.current[:shards].dup
+
     shards.each_pair do |key, value|
-      key = key.to_s
-      if Thread.current[:shards].has_key?(key)
-        old_shard_values[key] = Thread.current[:shards][key]
-      else
-        newly_added_shard_keys << key
-      end
       Thread.current[:shards][key.to_s] = value.to_s
     end
     if block_given?
       begin
         yield
       ensure
-        old_shard_values.each_pair do |key, value|
-          Thread.current[:shards][key] = value
-        end
-        newly_added_shard_keys.each do |key|
-          Thread.current[:shards].delete(key)
-        end
+        Thread.current[:shards] = old
       end
     end
   end
