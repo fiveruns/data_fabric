@@ -186,7 +186,7 @@ module DataFabric
           raise ArgumentError, "Unknown database config: #{conn_name}, have #{ActiveRecord::Base.configurations.inspect}" unless config
           @model_class.establish_connection config
           if logger.debug?
-            logger.debug "Switching from #{@current_connection_name} to #{conn_name}"
+            logger.debug "Switching from #{@current_connection_name || "(none)"} to #{conn_name}"
           end
           @current_connection_name = conn_name
           conn = @model_class.connection
