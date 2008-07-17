@@ -48,4 +48,11 @@ class ShardTest < Test::Unit::TestCase
       DataFabric.active_shard(:name)
     end
   end
+  
+  def test_activate_shard_returns_result_of_block
+    result = DataFabric.activate_shard(:gundam => 'Exia') do
+      1234
+    end
+    assert_equal 1234, result
+  end
 end
