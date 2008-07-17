@@ -143,7 +143,7 @@ module DataFabric
       if logger.debug?
         logger.debug("Calling #{method} on #{@cached_connection}")
       end
-      @cached_connection.send(method, *args, &block) 
+      raw_connection.send(method, *args, &block)
     end
     
     def connection_name
