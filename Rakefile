@@ -26,35 +26,46 @@ task :changelog do
 	`git log | grep -v git-svn-id > History.txt`
 end
 
-def setup_connection
-  require 'active_record'
-  ENV['RAILS_ENV'] = 'test'
-
-  ActiveRecord::Base.configurations = { 'test' => { :adapter => 'mysql', :host => 'localhost', :database => 'mysql' } }
-  ActiveRecord::Base.establish_connection 'test'
+def load_database_yml
+  filename = "test/database.yml"
+  if !File.exist?(filename)
+    STDERR.puts "\n*** ERROR ***:\n" <<
+      "You must have a 'test/database.yml' file in order to create the test database. " <<
+      "An example is provided in 'test/database.yml.example'.\n\n"
+    exit 1
+  end
+  YAML::load(ERB.new(IO.read(filename)).result)
 end
 
-def using_connection(&block)
+def setup_connection
+  require 'active_record'
+  ActiveRecord::Base.configurations = load_database_yml
+  ActiveRecord::Base.establish_connection('fiveruns_city_austin_test_master')
+  ActiveRecord::Base.logger = Logger.new(STDOUT)
+  ActiveRecord::Base.logger.level = Logger::DEBUG
+end
+
+def using_connection(database_identifier, &block)
   ActiveRecord::Base.connection.instance_eval(&block)
 end
 
 def setup(create = false)
   setup_connection
-
-  databases = %w( vr_austin_master vr_austin_slave vr_dallas_master vr_dallas_slave )
-  databases.each do |db|
-    using_connection do
+  
+  ActiveRecord::Base.configurations.each_pair do |identifier, config|
+    using_connection(identifier) do
+      db_name = config['database']
 			if create
-				execute "drop database if exists #{db}"
-				execute "create database #{db}"
+				execute "drop database if exists #{db_name}"
+				execute "create database #{db_name}"
 			end
-      execute "use #{db}"
+      execute "use #{db_name}"
       execute "drop table if exists the_whole_burritos"
       execute "drop table if exists enchiladas"
       execute "create table enchiladas (id integer not null auto_increment, name varchar(30) not null, primary key(id))"
-      execute "insert into enchiladas (id, name) values (1, '#{db}')"
+      execute "insert into enchiladas (id, name) values (1, '#{db_name}')"
       execute "create table the_whole_burritos (id integer not null auto_increment, name varchar(30) not null, primary key(id))"
-      execute "insert into the_whole_burritos (id, name) values (1, '#{db}')"
+      execute "insert into the_whole_burritos (id, name) values (1, '#{db_name}')"
     end  
   end
 end

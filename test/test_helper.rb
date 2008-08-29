@@ -22,7 +22,7 @@ if !defined?(ROOT_PATH) # Don't evaluate this file twice.
 
   def load_database_yml
     filename = DATABASE_YML_PATH
-    ActiveRecord::Base.configurations = YAML::load(ERB.new(IO.read(filename)).result)
+    YAML::load(ERB.new(IO.read(filename)).result)
   end
 
   if !File.exist?(DATABASE_YML_PATH)
