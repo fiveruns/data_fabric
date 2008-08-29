@@ -55,7 +55,6 @@ module DataFabric
     else
       !!@@debugging
     end
-    false
   end
   
   def self.activate_shard(shards, &block)
