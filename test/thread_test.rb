@@ -18,8 +18,7 @@ class ThreadTest < Test::Unit::TestCase
   end
   
   def xtest_class_and_instance_connections
-    filename = File.join(File.dirname(__FILE__), "database.yml")
-    ActiveRecord::Base.configurations = YAML::load(ERB.new(IO.read(filename)).result)
+    ActiveRecord::Base.configurations = load_database_yml
 
     cconn = ThreadedEnchilada.connection
     iconn = ThreadedEnchilada.new.connection
@@ -30,7 +29,7 @@ class ThreadTest < Test::Unit::TestCase
     clear_databases
 
     filename = File.join(File.dirname(__FILE__), "database.yml")
-    ActiveRecord::Base.configurations = YAML::load(ERB.new(IO.read(filename)).result)
+    ActiveRecord::Base.configurations = load_database_yml
 
     counts = {:austin => 0, :dallas => 0}
     threads = []

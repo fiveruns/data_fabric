@@ -1,3 +1,7 @@
+# The unit tests make use of the data populated in these databases.
+# The database identifiers (e.g. "fiveruns_city_austin_test_master") MUST NOT
+# be changed! Everything else may be changed.
+
 fiveruns_city_austin_test_master:
   adapter: mysql
   host: localhost

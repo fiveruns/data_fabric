@@ -9,8 +9,7 @@ end
 class DatabaseTest < Test::Unit::TestCase
   
   def setup
-    filename = File.join(File.dirname(__FILE__), "database.yml")
-    ActiveRecord::Base.configurations = YAML::load(ERB.new(IO.read(filename)).result)
+    ActiveRecord::Base.configurations = load_database_yml
   end
 
   def test_live_burrito
