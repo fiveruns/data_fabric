@@ -46,6 +46,18 @@ module DataFabric
     ActiveRecord::Base.send(:include, self)
   end
   
+  mattr_writer :debugging
+  @@debugging = false
+  
+  def self.debugging?
+    if @@debugging.nil? && logger
+      logger.debug?
+    else
+      !!@@debugging
+    end
+    false
+  end
+  
   def self.activate_shard(shards, &block)
     ensure_setup
 
@@ -140,7 +152,7 @@ module DataFabric
         raw_connection
         @role_changed = false
       end
-      if logger.debug?
+      if DataFabric.debugging?
         logger.debug("Calling #{method} on #{@cached_connection}")
       end
       raw_connection.send(method, *args, &block)
@@ -185,7 +197,7 @@ module DataFabric
           config = ActiveRecord::Base.configurations[conn_name]
           raise ArgumentError, "Unknown database config: #{conn_name}, have #{ActiveRecord::Base.configurations.inspect}" unless config
           @model_class.establish_connection config
-          if logger.debug?
+          if DataFabric.debugging?
             logger.debug "Switching from #{@current_connection_name || "(none)"} to #{conn_name}"
           end
           @current_connection_name = conn_name
