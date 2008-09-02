@@ -10,7 +10,7 @@ class AccountFigmentsTest < ActionController::IntegrationTest
     assert_equal 0, conn0.count_for('figments')
     assert_equal 0, conn1.count_for('figments')
 
-    new_session do |user|
+    new_session(0) do |user|
       user.goes_home
       mike = user.creates_account('mike', '0')
       user.selects_account(mike)
@@ -25,7 +25,7 @@ class AccountFigmentsTest < ActionController::IntegrationTest
     assert_equal 1, conn0.count_for('figments')
     assert_equal 0, conn1.count_for('figments')
 
-    new_session do |user|
+    new_session(1) do |user|
       user.goes_home
       bob = user.creates_account('bob', '1')
       user.selects_account(bob)
@@ -54,10 +54,12 @@ class AccountFigmentsTest < ActionController::IntegrationTest
     conn
   end
 
-  def new_session
+  def new_session(shard)
     open_session do |sess|
-      sess.extend(Operations)
-      yield sess if block_given?
+      DataFabric.activate_shard :shard => shard do
+        sess.extend(Operations)
+        yield sess if block_given?
+      end
     end
   end
 
