@@ -4,26 +4,28 @@ require 'echoe'
 require File.dirname(__FILE__) << "/lib/data_fabric/version"
 
 Echoe.new 'data_fabric' do |p|
-	p.version = DataFabric::Version::STRING
-	p.author = "Mike Perham"
-	p.email  = 'mperham@gmail.com'
-	p.project = 'fiveruns'
-	p.summary = 'Sharding and replication support for ActiveRecord 2.x'
-	p.url = "http://github.com/fiveruns/data_fabric"
-	p.dependencies = ['activerecord >=2.0.2']
-	p.include_rakefile = true
+  p.version = DataFabric::Version::STRING
+  p.author = "Mike Perham"
+  p.email  = 'mperham@gmail.com'
+  p.project = 'fiveruns'
+  p.summary = 'Sharding and replication support for ActiveRecord 2.x'
+  p.url = "http://github.com/fiveruns/data_fabric"
+  p.dependencies = ['activerecord >=2.0.2']
+  p.development_dependencies = []
+  p.rubygems_version = nil
+  p.include_rakefile = true
 end
 
 task :pretest do
-	setup(false)
+  setup(false)
 end
 
 task :create_db do
-	setup(true)
+  setup(true)
 end
 
 task :changelog do
-	`git log | grep -v git-svn-id > History.txt`
+  `git log | grep -v git-svn-id > History.txt`
 end
 
 def load_database_yml
@@ -55,10 +57,10 @@ def setup(create = false)
   ActiveRecord::Base.configurations.each_pair do |identifier, config|
     using_connection(identifier) do
       db_name = config['database']
-			if create
-				execute "drop database if exists #{db_name}"
-				execute "create database #{db_name}"
-			end
+      if create
+        execute "drop database if exists #{db_name}"
+        execute "create database #{db_name}"
+      end
       execute "use #{db_name}"
       execute "drop table if exists the_whole_burritos"
       execute "drop table if exists enchiladas"
