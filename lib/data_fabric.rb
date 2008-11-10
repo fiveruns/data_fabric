@@ -169,7 +169,7 @@ module DataFabric
     end
     
     def verify!(arg)
-      @cached_connection.verify!(0) if @cached_connection
+      @cached_connection.verify!(arg) if @cached_connection
     end
     
     def with_master
@@ -203,11 +203,11 @@ module DataFabric
           end
           @current_connection_name = conn_name
           conn = @model_class.connection
-          conn.verify! 0
           conn
         end
         @model_class.active_connections[@model_class.name] = self
       end
+      @cached_connection.verify!(3600)
       @cached_connection
     end
     
