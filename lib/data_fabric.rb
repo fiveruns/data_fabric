@@ -1,5 +1,6 @@
 require 'active_record'
 require 'active_record/version'
+require 'data_fabric/version'
 
 # DataFabric adds a new level of flexibility to ActiveRecord connection handling.
 # You need to describe the topology for your database infrastructure in your model(s).  As with ActiveRecord normally, different models can use different topologies.
@@ -126,107 +127,97 @@ module DataFabric
   class ConnectionProxy
     def initialize(model_class, options)
       @model_class = model_class      
-      @replicated = options[:replicated]
+      @replicated  = options[:replicated]
       @shard_group = options[:shard_by]
-      @prefix = options[:prefix]
-      @current_role = 'slave' if @replicated
-      @current_connection_name_builder = connection_name_builder
-      @cached_connection = nil
-      @current_connection_name = nil
-      @role_changed = false
+      @prefix      = options[:prefix]
+      @role        = 'slave' if @replicated
 
       @model_class.send :include, ActiveRecordConnectionMethods if @replicated
     end
-
+    
     delegate :insert, :update, :delete, :create_table, :rename_table, :drop_table, :add_column, :remove_column, 
       :change_column, :change_column_default, :rename_column, :add_index, :remove_index, :initialize_schema_information,
-      :dump_schema_information, :execute, :to => :master
-
-		delegate :insert_many, :to => :master # ar-extensions bulk load method
+      :dump_schema_information, :execute, :execute_ignore_duplicate, :to => :master
+    
+    def cache(&block)
+      connection.cache(&block)
+    end
 
     def transaction(start_db_transaction = true, &block)
-      with_master { raw_connection.transaction(start_db_transaction, &block) }
+      with_master { connection.transaction(start_db_transaction, &block) }
     end
 
     def method_missing(method, *args, &block)
-      unless @cached_connection and !@role_changed
-        raw_connection
-        @role_changed = false
-      end
-      if DataFabric.debugging?
-        logger.debug("Calling #{method} on #{@cached_connection}")
-      end
-      raw_connection.send(method, *args, &block)
+      logger.debug("Calling #{method} on #{connection}") if DataFabric.debugging?
+      connection.send(method, *args, &block)
     end
     
     def connection_name
-      @current_connection_name_builder.join('_')
+      connection_name_builder.join('_')
     end
     
     def disconnect!
-      @cached_connection.disconnect! if @cached_connection
-      @cached_connection = nil
+      if connected?
+        connection.disconnect! 
+        cached_connections[connection_name] = nil
+      end
     end
     
     def verify!(arg)
-      @cached_connection.verify!(arg) if @cached_connection
+      connection.verify!(0) if connected?
     end
     
     def with_master
+      # Allow nesting of with_master.
+      old_role = @role
       set_role('master')
       yield
     ensure
-      set_role('slave')
+      set_role(old_role)
     end
 
-    private
-    
+  private
+
+    def cached_connections
+      @cached_connections ||= {}
+    end
+
     def connection_name_builder
-      clauses = []
-      clauses << @prefix if @prefix
-      clauses << @shard_group if @shard_group
-      clauses << StringProxy.new { DataFabric.active_shard(@shard_group) } if @shard_group
-      clauses << RAILS_ENV
-      clauses << StringProxy.new { @current_role } if @replicated
-      clauses
+      @connection_name_builder ||= begin
+        clauses = []
+        clauses << @prefix if @prefix
+        clauses << @shard_group if @shard_group
+        clauses << StringProxy.new { DataFabric.active_shard(@shard_group) } if @shard_group
+        clauses << RAILS_ENV
+        clauses << StringProxy.new { @role } if @replicated
+        clauses
+      end
     end
     
-    def raw_connection
-      conn_name = connection_name
-      unless already_connected_to? conn_name 
-        @cached_connection = begin 
-          config = ActiveRecord::Base.configurations[conn_name]
-          raise ArgumentError, "Unknown database config: #{conn_name}, have #{ActiveRecord::Base.configurations.inspect}" unless config
-          @model_class.establish_connection config
-          if DataFabric.debugging?
-            logger.debug "Switching from #{@current_connection_name || "(none)"} to #{conn_name}"
-          end
-          @current_connection_name = conn_name
-          conn = @model_class.connection
-          conn
-        end
+    def connection
+      name = connection_name
+      if not connected?
+        config = ActiveRecord::Base.configurations[name]
+        raise ArgumentError, "Unknown database config: #{name}, have #{ActiveRecord::Base.configurations.inspect}" unless config
+        logger.debug("Connecting to #{name}") if DataFabric.debugging?
+        @model_class.establish_connection(config)
+        @model_class.connection.verify!(0)
+        cached_connections[name] = @model_class.connection
         @model_class.active_connections[@model_class.name] = self
       end
-      @cached_connection.verify!(3600)
-      @cached_connection
+      cached_connections[name]
     end
-    
-    def already_connected_to?(conn_name)
-      conn_name == @current_connection_name and @cached_connection
+
+    def connected?
+      not cached_connections[connection_name].nil?
     end
-    
+
     def set_role(role)
-      if @replicated and @current_role != role
-        @current_role = role
-        @role_changed = true
-      end
+      @role = role if @replicated
     end
     
     def master
-      set_role('master')
-      return raw_connection
-    ensure
-      set_role('slave')
+      with_master { return connection }
     end
     
     def logger
