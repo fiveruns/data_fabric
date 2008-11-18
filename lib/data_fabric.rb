@@ -164,7 +164,7 @@ module DataFabric
     end
     
     def verify!(arg)
-      connection.verify!(0) if connected?
+      connection.verify!(arg) if connected?
     end
     
     def with_master
@@ -205,6 +205,7 @@ module DataFabric
         cached_connections[name] = @model_class.connection
         @model_class.active_connections[@model_class.name] = self
       end
+      cached_connections[name].verify!(3600)
       cached_connections[name]
     end
 
