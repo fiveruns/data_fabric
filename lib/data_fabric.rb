@@ -37,25 +37,15 @@ require 'data_fabric/version'
 #   end
 # end
 module DataFabric
-  
-  def self.logger
-    ActiveRecord::Base.logger
-  end
+
+  # Set this logger to log DataFabric operations.
+  # The logger should quack like a standard Ruby Logger.
+  mattr_accessor :logger
 
   def self.init
-    logger.info "Loading data_fabric #{DataFabric::Version::STRING} with ActiveRecord #{ActiveRecord::VERSION::STRING}"
+    logger = ActiveRecord::Base.logger unless logger
+    log { "Loading data_fabric #{DataFabric::Version::STRING} with ActiveRecord #{ActiveRecord::VERSION::STRING}" }
     ActiveRecord::Base.send(:include, self)
-  end
-  
-  mattr_writer :debugging
-  @@debugging = false
-  
-  def self.debugging?
-    if @@debugging.nil? && logger
-      logger.debug?
-    else
-      !!@@debugging
-    end
   end
   
   def self.activate_shard(shards, &block)
@@ -93,7 +83,7 @@ module DataFabric
       raise ArgumentError, "No active shard for #{group}" unless shard
     end
   end
-  
+
   def self.included(model)
     # Wire up ActiveRecord::Base
     model.extend ClassMethods
@@ -102,7 +92,11 @@ module DataFabric
   def self.ensure_setup
     Thread.current[:shards] = {} unless Thread.current[:shards]
   end
-  
+
+  def self.log(level=Logger::INFO, &block)
+    logger && logger.add(level, &block)
+  end
+
   # Class methods injected into ActiveRecord::Base
   module ClassMethods
     def data_fabric(options)
@@ -110,7 +104,7 @@ module DataFabric
       ActiveRecord::Base.active_connections[name] = proxy
       
       raise ArgumentError, "data_fabric does not support ActiveRecord's allow_concurrency = true" if allow_concurrency
-      DataFabric.logger.info "Creating data_fabric proxy for class #{name}"
+      DataFabric.log { "Creating data_fabric proxy for class #{name}" }
     end
     alias :connection_topology :data_fabric # legacy
   end
@@ -148,7 +142,7 @@ module DataFabric
     end
 
     def method_missing(method, *args, &block)
-      logger.debug("Calling #{method} on #{connection}") if DataFabric.debugging?
+      DataFabric.log(Logger::DEBUG) { "Calling #{method} on #{connection}" }
       connection.send(method, *args, &block)
     end
     
@@ -199,9 +193,8 @@ module DataFabric
       if not connected?
         config = ActiveRecord::Base.configurations[name]
         raise ArgumentError, "Unknown database config: #{name}, have #{ActiveRecord::Base.configurations.inspect}" unless config
-        logger.debug("Connecting to #{name}") if DataFabric.debugging?
+        DataFabric.log { "Connecting to #{name}" }
         @model_class.establish_connection(config)
-        @model_class.connection.verify!(0)
         cached_connections[name] = @model_class.connection
         @model_class.active_connections[@model_class.name] = self
       end
@@ -210,7 +203,7 @@ module DataFabric
     end
 
     def connected?
-      not cached_connections[connection_name].nil?
+      cached_connections[connection_name]
     end
 
     def set_role(role)
@@ -219,10 +212,6 @@ module DataFabric
     
     def master
       with_master { return connection }
-    end
-    
-    def logger
-      DataFabric.logger
     end
   end
 
