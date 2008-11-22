@@ -2,15 +2,15 @@ require File.join(File.dirname(__FILE__), 'test_helper')
 require 'flexmock/test_unit'
 
 class PrefixModel < ActiveRecord::Base
-  connection_topology :prefix => 'prefix'
+  data_fabric :prefix => 'prefix'
 end
 
 class ShardModel < ActiveRecord::Base
-  connection_topology :shard_by => :city
+  data_fabric :shard_by => :city
 end
 
 class TheWholeEnchilada < ActiveRecord::Base
-  connection_topology :prefix => 'fiveruns', :replicated => true, :shard_by => :city
+  data_fabric :prefix => 'fiveruns', :replicated => true, :shard_by => :city
 end
 
 class AdapterMock < ActiveRecord::ConnectionAdapters::AbstractAdapter
@@ -43,7 +43,7 @@ end
 class ConnectionTest < Test::Unit::TestCase
 
   def test_should_install_into_arbase
-    assert PrefixModel.methods.include?('connection_topology')
+    assert PrefixModel.methods.include?('data_fabric')
   end
   
   def test_prefix_connection_name

@@ -3,7 +3,7 @@ require 'flexmock/test_unit'
 require 'erb'
 
 class TheWholeBurrito < ActiveRecord::Base
-  connection_topology :prefix => 'fiveruns', :replicated => true, :shard_by => :city
+  data_fabric :prefix => 'fiveruns', :replicated => true, :shard_by => :city
 end
 
 class DatabaseTest < Test::Unit::TestCase
@@ -18,11 +18,11 @@ class DatabaseTest < Test::Unit::TestCase
 
       # Should use the slave
       burrito = TheWholeBurrito.find(1)
-      assert_equal 'vr_dallas_slave', burrito.name
+      assert_match 'vr_dallas_slave', burrito.name
       
       # Should use the master
       burrito.reload
-      assert_equal 'vr_dallas_master', burrito.name
+      assert_match 'vr_dallas_master', burrito.name
 
       # ...but immediately set it back to default to the slave
       assert_equal 'fiveruns_city_dallas_test_slave', TheWholeBurrito.connection.connection_name
@@ -30,7 +30,7 @@ class DatabaseTest < Test::Unit::TestCase
       # Should use the master
       TheWholeBurrito.transaction do
         burrito = TheWholeBurrito.find(1)
-        assert_equal 'vr_dallas_master', burrito.name
+        assert_match 'vr_dallas_master', burrito.name
         burrito.save!
       end
     end

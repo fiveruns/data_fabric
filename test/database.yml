@@ -1,0 +1,24 @@
+# The unit tests make use of the data populated in these databases.
+#
+# Notes:
+# - The database identifiers (e.g. "fiveruns_city_austin_test_master") MUST NOT
+#   be changed! Everything else may be changed.
+# - The user defined for "fiveruns_city_austin_test_master" MUST have the
+#   privilege to create and drop databases and tables.
+
+
+fiveruns_city_austin_test_master:
+  adapter: sqlite3
+  database: test/vr_austin_master.db
+
+fiveruns_city_austin_test_slave:
+  adapter: sqlite3
+  database: test/vr_austin_slave.db
+
+fiveruns_city_dallas_test_master:
+  adapter: sqlite3
+  database: test/vr_dallas_master.db
+
+fiveruns_city_dallas_test_slave:
+  adapter: sqlite3
+  database: test/vr_dallas_slave.db

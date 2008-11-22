@@ -11,7 +11,7 @@ class ThreadTest < Test::Unit::TestCase
         class ThreadedEnchilada < ActiveRecord::Base
           self.allow_concurrency = true
           set_table_name :enchiladas
-          connection_topology :prefix => 'fiveruns', :replicated => true, :shard_by => :city
+          data_fabric :prefix => 'fiveruns', :replicated => true, :shard_by => :city
         end
       }
     end
