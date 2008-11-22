@@ -62,7 +62,8 @@ Manifest
 Rakefile
 README.rdoc
 test/connection_test.rb
-test/database.yml.example
+test/database.yml
+test/database.yml.mysql
 test/database_test.rb
 test/shard_test.rb
 test/test_helper.rb
