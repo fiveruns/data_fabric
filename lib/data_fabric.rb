@@ -83,6 +83,11 @@ module DataFabric
       raise ArgumentError, "No active shard for #{group}" unless shard
     end
   end
+  
+  def self.shard_active_for?(group)
+    return true unless group
+    Thread.current[:shards] and Thread.current[:shards][group.to_s]
+  end
 
   def self.included(model)
     # Wire up ActiveRecord::Base
@@ -203,7 +208,7 @@ module DataFabric
     end
 
     def connected?
-      cached_connections[connection_name]
+      DataFabric.shard_active_for?(@shard_group) and cached_connections[connection_name]
     end
 
     def set_role(role)
