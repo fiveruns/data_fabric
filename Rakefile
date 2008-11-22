@@ -12,7 +12,7 @@ Echoe.new 'data_fabric' do |p|
   p.project = 'fiveruns'
   p.summary = 'Sharding and replication support for ActiveRecord 2.0 and 2.1'
   p.url = "http://github.com/fiveruns/data_fabric"
-  p.dependencies = ['activerecord >=2.0.2']
+#  p.dependencies = ['activerecord >=2.0.2']
   p.development_dependencies = []
   p.rubygems_version = nil
   p.include_rakefile = true
