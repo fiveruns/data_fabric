@@ -10,13 +10,15 @@ Echoe.new 'data_fabric' do |p|
   p.author = "Mike Perham"
   p.email  = 'mperham@gmail.com'
   p.project = 'fiveruns'
-  p.summary = 'Sharding and replication support for ActiveRecord 2.x'
+  p.summary = 'Sharding and replication support for ActiveRecord 2.0 and 2.1'
   p.url = "http://github.com/fiveruns/data_fabric"
   p.dependencies = ['activerecord >=2.0.2']
   p.development_dependencies = []
   p.rubygems_version = nil
   p.include_rakefile = true
 end
+
+task :test => [:pretest]
 
 task :pretest do
   setup(false)
@@ -45,7 +47,7 @@ def setup_connection
   require 'active_record'
   ActiveRecord::Base.configurations = load_database_yml
   ActiveRecord::Base.logger = Logger.new(STDOUT)
-  ActiveRecord::Base.logger.level = Logger::DEBUG
+  ActiveRecord::Base.logger.level = Logger::INFO
 end
 
 def using_connection(database_identifier, &block)

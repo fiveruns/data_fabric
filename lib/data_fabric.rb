@@ -111,7 +111,6 @@ module DataFabric
       raise ArgumentError, "data_fabric does not support ActiveRecord's allow_concurrency = true" if allow_concurrency
       DataFabric.log { "Creating data_fabric proxy for class #{name}" }
     end
-    alias :connection_topology :data_fabric # legacy
   end
   
   class StringProxy

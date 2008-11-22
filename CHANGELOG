@@ -1,1 +1,14 @@
+DataFabric changelog
+
+v1.1.0 - 2008-11-22
+
+- Cache connections so we don't have to reconnect constantly. (Justin Balthrop, Geni)
+- Clean up logging API (not backwards-compatible)
+- Verify wrapped connections automatically so cached mysql connections older than 8 hours
+  don't die due to timeout.
+- Please note this version is not Rails 2.2-compatible.  DataFabric 2.0 will be.
+
+
+Detailed commit history:
+
 http://github.com/fiveruns/data_fabric/commits/master
