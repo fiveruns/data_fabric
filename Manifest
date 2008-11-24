@@ -56,6 +56,8 @@ example/test/functional/accounts_controller_test.rb
 example/test/integration/account_figments_test.rb
 example/test/test_helper.rb
 init.rb
+lib/data_fabric/ar20.rb
+lib/data_fabric/ar22.rb
 lib/data_fabric/version.rb
 lib/data_fabric.rb
 Manifest
@@ -68,4 +70,8 @@ test/database_test.rb
 test/shard_test.rb
 test/test_helper.rb
 test/thread_test.rb
+test/vr_austin_master.db
+test/vr_austin_slave.db
+test/vr_dallas_master.db
+test/vr_dallas_slave.db
 TESTING.rdoc

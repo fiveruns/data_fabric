@@ -10,6 +10,7 @@ class DatabaseTest < Test::Unit::TestCase
   
   def setup
     ActiveRecord::Base.configurations = load_database_yml
+    DataFabric::ConnectionProxy.shard_pools.clear
   end
 
   def test_live_burrito

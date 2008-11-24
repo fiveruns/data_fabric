@@ -1,5 +1,9 @@
 DataFabric changelog
 
+v1.2.0 - 2008-12-25
+
+- Now supports ActiveRecord 2.2.
+
 v1.1.0 - 2008-11-22
 
 - Cache connections so we don't have to reconnect constantly. (Justin Balthrop, Geni)

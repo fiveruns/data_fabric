@@ -62,7 +62,7 @@ ActionController around_filter based on the user as follows:
 == Warnings
 
 * Sharded models should never be placed in the session store or you will get "Shard not set" errors when the session is persisted.
-* ActiveRecord's allow_concurrency = true is NOT supported in this version of data_fabric.
+* DataFabric does not support running with ActiveRecord's allow_concurrency = true in AR 2.0 and 2.1.  allow_concurrency is gone in AR 2.2.
 
 == Testing and Bug Reports
 

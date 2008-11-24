@@ -1,8 +1,6 @@
 require 'rubygems'
 require 'echoe'
 
-#gem 'rails', '=2.0.2'
-
 require File.dirname(__FILE__) << "/lib/data_fabric/version"
 
 Echoe.new 'data_fabric' do |p|
@@ -10,15 +8,22 @@ Echoe.new 'data_fabric' do |p|
   p.author = "Mike Perham"
   p.email  = 'mperham@gmail.com'
   p.project = 'fiveruns'
-  p.summary = 'Sharding and replication support for ActiveRecord 2.0 and 2.1'
+  p.summary = 'Sharding and replication support for ActiveRecord 2.x'
   p.url = "http://github.com/fiveruns/data_fabric"
-#  p.dependencies = ['activerecord >=2.0.2']
   p.development_dependencies = []
   p.rubygems_version = nil
   p.include_rakefile = true
+  p.test_pattern = 'test/*_test.rb'
 end
 
 task :test => [:pretest]
+
+desc "Test all versions of ActiveRecord installed locally"
+task :test_all do
+  Gem.source_index.search(Gem::Dependency.new('activerecord', '>=2.0')).each do |spec|
+    puts `rake test AR_VERSION=#{spec.version}`
+  end
+end
 
 task :pretest do
   setup(false)
@@ -26,10 +31,6 @@ end
 
 task :create_db do
   setup(true)
-end
-
-task :changelog do
-  `git log | grep -v git-svn-id > History.txt`
 end
 
 def load_database_yml
