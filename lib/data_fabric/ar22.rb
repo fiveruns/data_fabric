@@ -22,7 +22,7 @@ module DataFabric
           end
 
           def remove_connection(klass)
-            raise "not implemented"
+            DataFabric.log(Logger::ERROR) { "remove_connection not implemented by data_fabric" }
           end
 
           def connection_pool
@@ -52,12 +52,15 @@ module DataFabric
 
     delegate :insert_many, :to => :master # ar-extensions bulk insert support
 
-    def cache(&block)
-      connection.cache(&block)
-    end
-
     def transaction(start_db_transaction = true, &block)
-      with_master { connection.transaction(start_db_transaction, &block) }
+      # Transaction is not re-entrant in SQLite 3 so we
+      # need to track if we've already started an XA to avoid
+      # calling it twice.
+      return yield if in_transaction?
+
+      with_master do
+        connection.transaction(start_db_transaction, &block) 
+      end
     end
 
     def method_missing(method, *args, &block)
@@ -67,10 +70,6 @@ module DataFabric
 
     def connection_name
       connection_name_builder.join('_')
-    end
-
-    def verify!(arg)
-      connection.verify!(arg) if connected?
     end
 
     def with_master
@@ -83,6 +82,10 @@ module DataFabric
     end
     
   private
+
+    def in_transaction?
+      current_role == 'master'
+    end
 
     def current_pool
       name = connection_name
@@ -131,12 +134,12 @@ module DataFabric
       current_pool.connection
     end
 
-    def connected?
-      DataFabric.shard_active_for?(@shard_group) and cached_connections[connection_name]
+    def active?
+      DataFabric.shard_active_for?(@shard_group)
     end
 
     def set_role(role)
-      Thread.current[:data_fabric_role] = role if @replicated
+      Thread.current[:data_fabric_role] = role
     end
     
     def current_role

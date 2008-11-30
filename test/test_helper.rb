@@ -17,7 +17,6 @@ require 'active_record'
 require 'active_record/version'
 ActiveRecord::Base.logger = Logger.new(STDOUT)
 ActiveRecord::Base.logger.level = Logger::WARN
-ActiveRecord::Base.logger = Logger.new(STDOUT)
 
 # Bootstrap DF
 deps = defined?(ActiveSupport::Dependencies) ? ActiveSupport::Dependencies : Dependencies

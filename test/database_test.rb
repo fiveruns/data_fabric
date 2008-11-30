@@ -27,11 +27,12 @@ class DatabaseTest < Test::Unit::TestCase
 
       # ...but immediately set it back to default to the slave
       assert_equal 'fiveruns_city_dallas_test_slave', TheWholeBurrito.connection.connection_name
-      
+
       # Should use the master
       TheWholeBurrito.transaction do
         burrito = TheWholeBurrito.find(1)
         assert_match 'vr_dallas_master', burrito.name
+        burrito.name = 'foo'
         burrito.save!
       end
     end
