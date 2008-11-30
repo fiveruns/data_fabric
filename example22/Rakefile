@@ -1,0 +1,58 @@
+# Add your own tasks in files placed in lib/tasks ending in .rake,
+# for example lib/tasks/capistrano.rake, and they will automatically be available to Rake.
+
+require(File.join(File.dirname(__FILE__), 'config', 'boot'))
+
+require 'rake'
+require 'rake/testtask'
+require 'rake/rdoctask'
+
+require 'tasks/rails'
+
+require 'fileutils'
+include FileUtils::Verbose
+
+namespace :db do
+    task :migrate do
+      require 'erb'
+      require 'logger'
+      require 'active_record'
+      reference = YAML::load(ERB.new(IO.read("config/database.yml")).result)
+      env = RAILS_ENV = ENV['RAILS_ENV'] || 'development'
+      ActiveRecord::Base.logger = Logger.new(STDOUT)
+      ActiveRecord::Base.logger.level = Logger::WARN
+      ActiveRecord::Base.configurations = reference.dup
+      old_config = reference[env]
+      reference.each_key do |name|
+        next unless name.include? env
+        next if name.include? 'slave' # Replicated databases should not be touched directly
+
+        puts "Migrating #{name}"
+        ActiveRecord::Base.clear_active_connections!
+        ActiveRecord::Base.configurations[env] = reference[name]
+        ActiveRecord::Base.establish_connection RAILS_ENV
+        ActiveRecord::Migration.verbose = ENV["VERBOSE"] ? ENV["VERBOSE"] == "true" : true
+        ActiveRecord::Migrator.migrate("db/migrate/", ENV["VERSION"] ? ENV["VERSION"].to_i : nil)
+      end
+    end
+end
+
+namespace :app do
+  task :prepare => [:clean, :copy_plugin, :migrate]
+
+  task :copy_plugin do
+    mkdir_p 'vendor/plugins/data_fabric'
+    cp_r '../lib', 'vendor/plugins/data_fabric'
+    cp '../init.rb', 'vendor/plugins/data_fabric'
+  end
+
+  task :clean do
+    rm_rf 'vendor/plugins/data_fabric'
+    rm_f 'db/*.sqlite3'
+  end
+
+	task :migrate do
+		sh "rake db:migrate"
+		sh "rake RAILS_ENV=test db:migrate"
+	end
+end
