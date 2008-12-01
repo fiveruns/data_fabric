@@ -10,17 +10,27 @@ class DatabaseTest < Test::Unit::TestCase
   
   def setup
     ActiveRecord::Base.configurations = load_database_yml
-    DataFabric::ConnectionProxy.shard_pools.clear
+    if ar22?
+      DataFabric::ConnectionProxy.shard_pools.clear
+    end
   end
 
   def test_live_burrito
     DataFabric.activate_shard :city => :dallas do
       assert_equal 'fiveruns_city_dallas_test_slave', TheWholeBurrito.connection.connection_name
 
+      assert_raises RuntimeError do
+        TheWholeBurrito.connection_pool
+      end
+
+      assert !TheWholeBurrito.connected?
+
       # Should use the slave
       burrito = TheWholeBurrito.find(1)
       assert_match 'vr_dallas_slave', burrito.name
-      
+
+      assert TheWholeBurrito.connected?
+
       # Should use the master
       burrito.reload
       assert_match 'vr_dallas_master', burrito.name

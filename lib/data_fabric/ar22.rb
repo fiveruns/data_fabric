@@ -81,6 +81,10 @@ module DataFabric
       set_role(old_role)
     end
     
+    def connected?
+      current_pool.connected?
+    end
+
   private
 
     def in_transaction?
@@ -132,10 +136,6 @@ module DataFabric
     
     def connection
       current_pool.connection
-    end
-
-    def active?
-      DataFabric.shard_active_for?(@shard_group)
     end
 
     def set_role(role)
