@@ -87,3 +87,21 @@ def create_mysql(create, db_name)
   execute "create table the_whole_burritos (id integer not null auto_increment, name varchar(30) not null, primary key(id))"
   execute "insert into the_whole_burritos (id, name) values (1, '#{db_name}')"
 end
+
+# Test coverage
+begin
+  gem 'spicycode-rcov'
+  require 'rcov/rcovtask'
+
+  task :cover => [:pretest, :rcov]
+
+  Rcov::RcovTask.new('rcov') do |t|
+    t.libs << "test"
+    t.test_files = FileList["test/*_test.rb"]
+    t.output_dir = "coverage"
+    t.verbose = true
+    t.rcov_opts = ['--text-report', '--exclude', "test,Library,#{ENV['GEM_HOME']}", '--sort', 'coverage']
+  end
+rescue GemError => e
+  puts 'Test coverage support requires \'gem install spicycode-rcov\''
+end
