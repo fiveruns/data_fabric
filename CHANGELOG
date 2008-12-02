@@ -1,6 +1,11 @@
 DataFabric changelog
 
-v1.2.0 - 2008-12-25
+v1.2.1 - 2008-12-01
+
+- Clean up gem of superfluous files, trims gem size from 160k to 50k.
+  No functional changes.
+
+v1.2.0 - 2008-12-01
 
 - Now supports ActiveRecord 2.2.
 
