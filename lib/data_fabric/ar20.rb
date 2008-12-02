@@ -32,9 +32,7 @@ module DataFabric
       :change_column, :change_column_default, :rename_column, :add_index, :remove_index, :initialize_schema_information,
       :dump_schema_information, :execute, :execute_ignore_duplicate, :to => :master
 
-    def cache(&block)
-      connection.cache(&block)
-    end
+    delegate :insert_many, :to => :master # ar-extensions bulk insert support
 
     def transaction(start_db_transaction = true, &block)
       with_master { connection.transaction(start_db_transaction, &block) }

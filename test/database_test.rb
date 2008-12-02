@@ -15,7 +15,9 @@ class DatabaseTest < Test::Unit::TestCase
     end
   end
 
-  def test_live_burrito
+  def test_ar22_features
+    return unless ar22?
+
     DataFabric.activate_shard :city => :dallas do
       assert_equal 'fiveruns_city_dallas_test_slave', TheWholeBurrito.connection.connection_name
 
@@ -30,6 +32,16 @@ class DatabaseTest < Test::Unit::TestCase
       assert_match 'vr_dallas_slave', burrito.name
 
       assert TheWholeBurrito.connected?
+    end
+  end
+
+  def test_live_burrito
+    DataFabric.activate_shard :city => :dallas do
+      assert_equal 'fiveruns_city_dallas_test_slave', TheWholeBurrito.connection.connection_name
+
+      # Should use the slave
+      burrito = TheWholeBurrito.find(1)
+      assert_match 'vr_dallas_slave', burrito.name
 
       # Should use the master
       burrito.reload
