@@ -143,7 +143,7 @@ module DataFabric
     end
     
     def current_role
-      Thread.current[:data_fabric_role]
+      Thread.current[:data_fabric_role] || 'slave'
     end
 
     def master
