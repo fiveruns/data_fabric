@@ -1,3 +1,12 @@
+
+class ActiveRecord::ConnectionAdapters::ConnectionHandler
+  def clear_active_connections_with_data_fabric!
+    clear_active_connections_without_data_fabric!
+    DataFabric::ConnectionProxy.shard_pools.each_value { |pool| pool.release_connection }
+  end
+  alias_method_chain :clear_active_connections!, :data_fabric
+end
+
 module DataFabric
   module Extensions
     def self.included(model)
