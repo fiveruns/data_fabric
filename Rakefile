@@ -90,8 +90,8 @@ def create_mysql(create, db_name)
 end
 
 # Test coverage
-gem 'spicycode-rcov' rescue nil
 begin
+  gem 'spicycode-rcov' rescue nil
   require 'rcov/rcovtask'
 
   desc "Generate coverage numbers for all locally installed versions of ActiveRecord"

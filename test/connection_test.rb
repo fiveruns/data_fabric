@@ -43,7 +43,9 @@ end
 class ConnectionTest < Test::Unit::TestCase
 
   def test_should_install_into_arbase
-    assert PrefixModel.methods.include?('data_fabric')
+    # Ruby 1.8 vs 1.9 difference
+    meth = PrefixModel.methods.first.is_a?(Symbol) ? :data_fabric : 'data_fabric'
+    assert PrefixModel.methods.include?(meth)
   end
   
   def test_prefix_connection_name
