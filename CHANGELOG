@@ -1,5 +1,9 @@
 DataFabric changelog
 
+v1.2.4 - Unreleased
+
+- Add FiveRuns Dash recipe for data_fabric.  See http://dash.fiveruns.com for details.
+
 v1.2.3 - 2008-02-05
 
 - Release connections at the end of each Rails action.  If you see 5 second
