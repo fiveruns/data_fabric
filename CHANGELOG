@@ -1,5 +1,13 @@
 DataFabric changelog
 
+v1.2.3 - 2008-02-05
+
+- Release connections at the end of each Rails action.  If you see 5 second
+  pauses in your application, it's because the connection pool is timing out
+  and releasing checked out connections.
+
+- NB: DataFabric passes all tests against Rails 2.3.0.
+
 v1.2.2 - 2008-12-16
 
 - Fix multithreading issue with AR 2.2.

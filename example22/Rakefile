@@ -37,6 +37,15 @@ namespace :db do
     end
 end
 
+task :default => :test
+
+task :test do
+	if !File.exist? 'vendor'
+		puts "You need to run `rake app:prepare`"
+		exit(1)
+	end
+end
+
 namespace :app do
   task :prepare => [:clean, :copy_plugin, :migrate]
 
