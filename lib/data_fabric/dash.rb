@@ -14,7 +14,7 @@ raise ArgumentError, "The Dash recipe for DataFabric is only supported on Active
 Fiveruns::Dash.register_recipe :data_fabric, :url => 'http://mikeperham.com' do |recipe|
   recipe.absolute :open_connections, 'Open Connections' do
     DataFabric::ConnectionProxy.shard_pools.values.map do |pool|
-      pool.instance_variable_get(:@checked_out) || 0
+      (pool.instance_variable_get(:@checked_out) || []).size
     end.sum
   end
 end
