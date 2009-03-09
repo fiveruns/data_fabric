@@ -1,10 +1,12 @@
 DataFabric changelog
 
-v1.2.4 - Unreleased
+v1.2.4 - 2009-03-09
 
 - Add FiveRuns Dash recipe for data_fabric.  See http://dash.fiveruns.com for details.
+- Fixed incorrect remove_connection method signature.
+- The official data_fabric repository is now http://github.com/mperham/data_fabric.
 
-v1.2.3 - 2008-02-05
+v1.2.3 - 2009-02-05
 
 - Release connections at the end of each Rails action.  If you see 5 second
   pauses in your application, it's because the connection pool is timing out

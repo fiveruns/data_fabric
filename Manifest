@@ -105,6 +105,7 @@ init.rb
 lib/data_fabric/ar20.rb
 lib/data_fabric/ar22.rb
 lib/data_fabric/version.rb
+lib/data_fabric/dash.rb
 lib/data_fabric.rb
 Manifest
 Rakefile
