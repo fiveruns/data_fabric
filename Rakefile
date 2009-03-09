@@ -9,7 +9,7 @@ Echoe.new 'data_fabric' do |p|
   p.email  = 'mperham@gmail.com'
   p.project = 'fiveruns'
   p.summary = 'Sharding and replication support for ActiveRecord 2.x'
-  p.url = "http://github.com/fiveruns/data_fabric"
+  p.url = "http://github.com/mperham/data_fabric"
   p.development_dependencies = []
   p.rubygems_version = nil
   p.include_rakefile = true
