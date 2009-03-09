@@ -30,8 +30,8 @@ module DataFabric
             @proxy.connected?
           end
 
-          def remove_connection(klass)
-            DataFabric.log(Logger::ERROR) { "remove_connection not implemented by data_fabric" }
+          def remove_connection(klass=self)
+            DataFabric.log(Logger::WARN) { "remove_connection not implemented by data_fabric" }
           end
 
           def connection_pool
