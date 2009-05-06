@@ -1,3 +1,5 @@
+Please note this repository has moved to http://github.com/mperham/data_fabric
+
 = data_fabric
 
 DataFabric provides flexible database connection switching for ActiveRecord.
